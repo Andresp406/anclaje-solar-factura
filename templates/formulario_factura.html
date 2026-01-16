@@ -240,6 +240,34 @@
             color: #1E5A8E;
         }
         
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .checkbox-label:hover {
+            border-color: #1E5A8E;
+            background: #f0f8ff;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label span {
+            font-size: 16px;
+            color: #2C2C2C;
+        }
+        
         .btn-submit {
             background: linear-gradient(135deg, #F5B301 0%, #e5a001 100%);
             color: white;
@@ -253,6 +281,13 @@
             margin-top: 30px;
             transition: all 0.3s;
             box-shadow: 0 5px 15px rgba(245, 179, 1, 0.3);
+        }
+        
+        .btn-submit:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            opacity: 0.6;
         }
         
         .btn-submit:hover {
@@ -391,7 +426,20 @@
                 </div>
             </div>
             
-            <button type="submit" class="btn-submit">🚀 Generar Factura PDF</button>
+            <!-- Opción de descarga -->
+            <div class="section">
+                <h2 class="section-title">Opciones de Envío</h2>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="descargar_pdf" name="descargar_pdf" value="1">
+                            <span>💾 Descargar PDF ahora (si no se marca, solo se envía por correo/WhatsApp)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit" id="btnGenerar" disabled>🚀 Generar Factura</button>
         </form>
     </div>
     
@@ -486,9 +534,102 @@
             });
         }
         
+        // Función para validar formulario
+        function validarFormulario() {
+            const btnGenerar = document.getElementById('btnGenerar');
+            const form = document.getElementById('facturaForm');
+            
+            // Campos requeridos
+            const camposRequeridos = [
+                'nit', 'telefono', 'correo', 'cliente', 'documento', 
+                'fecha', 'direccion', 'factura_no'
+            ];
+            
+            // Verificar campos requeridos
+            const todosLlenos = camposRequeridos.every(campo => {
+                const input = document.getElementById(campo);
+                return input && input.value.trim() !== '';
+            });
+            
+            // Verificar que haya al menos un item con descripción y valor
+            const descripciones = document.querySelectorAll('input[name="descripcion[]"]');
+            const valores = document.querySelectorAll('input[name="valor_unitario[]"]');
+            let itemValido = false;
+            
+            for (let i = 0; i < descripciones.length; i++) {
+                if (descripciones[i].value.trim() !== '' && 
+                    valores[i].value.trim() !== '' && 
+                    parseFloat(valores[i].value) > 0) {
+                    itemValido = true;
+                    break;
+                }
+            }
+            
+            // Habilitar/deshabilitar botón
+            if (todosLlenos && itemValido) {
+                btnGenerar.disabled = false;
+                btnGenerar.style.cursor = 'pointer';
+            } else {
+                btnGenerar.disabled = true;
+                btnGenerar.style.cursor = 'not-allowed';
+            }
+        }
+        
+        // Agregar listeners de validación a todos los inputs
+        function agregarValidadores() {
+            const todosInputs = document.querySelectorAll('input, textarea');
+            todosInputs.forEach(input => {
+                input.addEventListener('input', validarFormulario);
+                input.addEventListener('change', validarFormulario);
+            });
+        }
+        
+        // Manejar envío del formulario
+        document.getElementById('facturaForm').addEventListener('submit', function(e) {
+            const descargarPdf = document.getElementById('descargar_pdf').checked;
+            
+            // Si no se descarga, prevenir comportamiento por defecto y usar AJAX
+            if (!descargarPdf) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const btnGenerar = document.getElementById('btnGenerar');
+                
+                // Deshabilitar botón y mostrar loading
+                btnGenerar.disabled = true;
+                btnGenerar.innerHTML = '⏳ Generando y enviando...';
+                
+                fetch('/generar', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ ' + data.message + '\n\nLa factura se ha enviado al correo electrónico del cliente.');
+                        // Opcional: limpiar formulario o redirigir
+                        // window.location.reload();
+                    } else {
+                        alert('❌ Error: ' + (data.error || 'No se pudo generar la factura'));
+                    }
+                })
+                .catch(error => {
+                    alert('❌ Error al generar la factura: ' + error.message);
+                })
+                .finally(() => {
+                    btnGenerar.disabled = false;
+                    btnGenerar.innerHTML = '🚀 Generar Factura';
+                    validarFormulario();
+                });
+            }
+            // Si se descarga, dejar que el formulario se envíe normalmente
+        });
+        
         // Inicializar
         attachListeners();
         calcularTotales();
+        agregarValidadores();
+        validarFormulario();
     </script>
 </body>
 </html>

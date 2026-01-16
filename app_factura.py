@@ -34,6 +34,7 @@ def generar():
         direccion = request.form.get('direccion', '')
         email_cliente = request.form.get('email_cliente', '')
         telefono_cliente = request.form.get('telefono_cliente', '')
+        descargar_pdf = request.form.get('descargar_pdf', '') == '1'
         fecha_input = request.form.get('fecha', '')
         
         # Convertir fecha de YYYY-MM-DD a DD/MM/YYYY
@@ -131,13 +132,21 @@ def generar():
                 print(f"Error al enviar a n8n: {e}")
                 # No fallar si n8n falla, solo continuar
         
-        # Enviar el archivo PDF
-        return send_file(
-            archivo_pdf,
-            as_attachment=True,
-            download_name=f'factura_{factura_no}.pdf',
-            mimetype='application/pdf'
-        )
+        # Si se marcó descarga, enviar el archivo PDF
+        if descargar_pdf:
+            return send_file(
+                archivo_pdf,
+                as_attachment=True,
+                download_name=f'factura_{factura_no}.pdf',
+                mimetype='application/pdf'
+            )
+        else:
+            # Si no se descarga, solo confirmar que se envió
+            return jsonify({
+                'success': True,
+                'message': f'Factura {factura_no} generada y enviada por correo',
+                'factura_no': factura_no
+            })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 400
