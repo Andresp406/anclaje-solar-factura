@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Facturas - ANCLAJE SOLAR ENERGY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1E5A8E 0%, #2C2C2C 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1E5A8E 0%, #2C2C2C 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #F5B301;
+            font-size: 16px;
+            font-weight: 300;
+        }
+        
+        .form-container {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 35px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #1E5A8E;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #F5B301;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 8px;
+            height: 25px;
+            background: #F5B301;
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2C2C2C;
+            font-size: 14px;
+        }
+        
+        input, textarea {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #1E5A8E;
+            box-shadow: 0 0 0 3px rgba(30, 90, 142, 0.1);
+        }
+        
+        .items-container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .item-row {
+            display: grid;
+            grid-template-columns: 2.5fr 0.8fr 1.2fr 100px 60px;
+            gap: 12px;
+            margin-bottom: 15px;
+            align-items: end;
+        }
+        
+        .toggle-iva {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 46px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #27ae60;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        
+        .btn-remove {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
+            min-width: 50px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-remove:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+        
+        .btn-add {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-add:hover {
+            background: #229954;
+            transform: scale(1.05);
+        }
+        
+        .totales {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #1E5A8E;
+            margin-top: 20px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 16px;
+        }
+        
+        .total-row.final {
+            border-top: 3px solid #F5B301;
+            margin-top: 10px;
+            padding-top: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1E5A8E;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #F5B301 0%, #e5a001 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 30px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(245, 179, 1, 0.3);
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 179, 1, 0.4);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 768px) {
+            .item-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .toggle-iva {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌞 ANCLAJE SOLAR ENERGY</h1>
+            <p class="subtitle">Generador de Facturas - Energía Solar Fotovoltaica</p>
+        </div>
+        
+        <form id="facturaForm" action="/generar" method="POST" class="form-container">
+            <!-- Información de la Empresa -->
+            <div class="section">
+                <h2 class="section-title">Información de la Empresa</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nit">NIT:</label>
+                        <input type="text" id="nit" name="nit" value="901.234.567-8" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono:</label>
+                        <input type="text" id="telefono" name="telefono" value="+57 300 123 4567" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="correo">Correo:</label>
+                        <input type="email" id="correo" name="correo" value="ventas@anclajesolar.com" required>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información del Cliente -->
+            <div class="section">
+                <h2 class="section-title">Información del Cliente</h2>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="cliente">Nombre del Cliente:</label>
+                        <input type="text" id="cliente" name="cliente" placeholder="Ej: Juan Pérez García" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="documento">Documento:</label>
+                        <input type="text" id="documento" name="documento" placeholder="Ej: CC 1234567890" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha">Fecha:</label>
+                        <input type="date" id="fecha" name="fecha" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="direccion">Dirección:</label>
+                        <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle 123 #45-67, Bogotá" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="factura_no">Número de Factura:</label>
+                        <input type="text" id="factura_no" name="factura_no" placeholder="Ej: 001-2025" required>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Items de la Factura -->
+            <div class="section">
+                <h2 class="section-title">Items de la Factura</h2>
+                <div class="items-container">
+                    <div id="items-list">
+                        <div class="item-row">
+                            <div class="form-group">
+                                <label>Descripción:</label>
+                                <input type="text" name="descripcion[]" placeholder="Ej: Panel Solar 450W" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Cantidad:</label>
+                                <input type="number" name="cantidad[]" min="1" value="1" class="cantidad" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Valor Unitario:</label>
+                                <input type="number" name="valor_unitario[]" min="0" step="0.01" placeholder="0.00" class="valor" required>
+                            </div>
+                            <div class="form-group">
+                                <label>IVA (19%):</label>
+                                <div class="toggle-iva">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" name="tiene_iva[]" value="1" class="toggle-iva-input" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-remove" onclick="removeItem(this)">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add" onclick="addItem()">+ Agregar Item</button>
+                </div>
+                
+                <!-- Totales -->
+                <div class="totales">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>IVA (19%):</span>
+                        <span id="iva">$0.00</span>
+                    </div>
+                    <div class="total-row final">
+                        <span>TOTAL A PAGAR:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit">🚀 Generar Factura PDF</button>
+        </form>
+    </div>
+    
+    <script>
+        // Establecer fecha actual en formato YYYY-MM-DD para input type="date"
+        const hoy = new Date();
+        const fechaFormateada = hoy.toISOString().split('T')[0];
+        document.getElementById('fecha').value = fechaFormateada;
+        
+        function addItem() {
+            const itemsList = document.getElementById('items-list');
+            const newItem = document.createElement('div');
+            newItem.className = 'item-row';
+            newItem.innerHTML = `
+                <div class="form-group">
+                    <label>Descripción:</label>
+                    <input type="text" name="descripcion[]" placeholder="Ej: Panel Solar 450W" required>
+                </div>
+                <div class="form-group">
+                    <label>Cantidad:</label>
+                    <input type="number" name="cantidad[]" min="1" value="1" class="cantidad" required>
+                </div>
+                <div class="form-group">
+                    <label>Valor Unitario:</label>
+                    <input type="number" name="valor_unitario[]" min="0" step="0.01" placeholder="0.00" class="valor" required>
+                </div>
+                <div class="form-group">
+                    <label>IVA (19%):</label>
+                    <div class="toggle-iva">
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="tiene_iva[]" value="1" class="toggle-iva-input" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" class="btn-remove" onclick="removeItem(this)">✕</button>
+            `;
+            itemsList.appendChild(newItem);
+            attachListeners();
+        }
+        
+        function removeItem(button) {
+            const itemsList = document.getElementById('items-list');
+            if (itemsList.children.length > 1) {
+                button.parentElement.remove();
+                calcularTotales();
+            } else {
+                alert('Debe haber al menos un item en la factura');
+            }
+        }
+        
+        function calcularTotales() {
+            const cantidades = document.querySelectorAll('.cantidad');
+            const valores = document.querySelectorAll('.valor');
+            const togglesIva = document.querySelectorAll('.toggle-iva-input');
+            
+            let subtotal = 0;
+            let totalIva = 0;
+            
+            for (let i = 0; i < cantidades.length; i++) {
+                const cantidad = parseFloat(cantidades[i].value) || 0;
+                const valor = parseFloat(valores[i].value) || 0;
+                const tieneIva = togglesIva[i] && togglesIva[i].checked;
+                
+                const subtotalItem = cantidad * valor;
+                subtotal += subtotalItem;
+                
+                // Solo sumar IVA si el toggle está activado
+                if (tieneIva) {
+                    totalIva += subtotalItem * 0.19;
+                }
+            }
+            
+            const total = subtotal + totalIva;
+            
+            document.getElementById('subtotal').textContent = '$' + subtotal.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('iva').textContent = '$' + totalIva.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('total').textContent = '$' + total.toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        function attachListeners() {
+            const inputs = document.querySelectorAll('.cantidad, .valor');
+            inputs.forEach(input => {
+                input.removeEventListener('input', calcularTotales);
+                input.addEventListener('input', calcularTotales);
+            });
+            
+            const toggles = document.querySelectorAll('.toggle-iva-input');
+            toggles.forEach(toggle => {
+                toggle.removeEventListener('change', calcularTotales);
+                toggle.addEventListener('change', calcularTotales);
+            });
+        }
+        
+        // Inicializar
+        attachListeners();
+        calcularTotales();
+    </script>
+</body>
+</html>
