@@ -7,6 +7,8 @@ from flask import Flask, render_template, request, send_file, jsonify
 from datetime import datetime
 import os
 import sys
+import requests
+import base64
 
 # Importar la función de generación de facturas
 from generar_factura import generar_factura
@@ -30,6 +32,8 @@ def generar():
         cliente = request.form.get('cliente', '')
         documento = request.form.get('documento', '')
         direccion = request.form.get('direccion', '')
+        email_cliente = request.form.get('email_cliente', '')
+        telefono_cliente = request.form.get('telefono_cliente', '')
         fecha_input = request.form.get('fecha', '')
         
         # Convertir fecha de YYYY-MM-DD a DD/MM/YYYY
@@ -97,6 +101,35 @@ def generar():
             iva=iva,
             total=total
         )
+        
+        # Enviar a n8n webhook (si está configurado)
+        n8n_webhook_url = os.environ.get('N8N_WEBHOOK_URL')
+        if n8n_webhook_url and (email_cliente or telefono_cliente):
+            try:
+                # Leer el PDF y convertirlo a base64
+                with open(archivo_pdf, 'rb') as pdf_file:
+                    pdf_base64 = base64.b64encode(pdf_file.read()).decode('utf-8')
+                
+                # Preparar datos para n8n
+                webhook_data = {
+                    'factura_no': factura_no,
+                    'cliente': cliente,
+                    'email_cliente': email_cliente,
+                    'telefono_cliente': telefono_cliente,
+                    'fecha': fecha,
+                    'total': total,
+                    'subtotal': subtotal,
+                    'iva': iva,
+                    'items': items,
+                    'pdf_filename': f'factura_{factura_no}.pdf',
+                    'pdf_base64': pdf_base64
+                }
+                
+                # Enviar a n8n
+                requests.post(n8n_webhook_url, json=webhook_data, timeout=10)
+            except Exception as e:
+                print(f"Error al enviar a n8n: {e}")
+                # No fallar si n8n falla, solo continuar
         
         # Enviar el archivo PDF
         return send_file(
