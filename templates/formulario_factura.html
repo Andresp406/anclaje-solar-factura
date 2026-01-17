@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Facturas - ANCLAJE SOLAR ENERGY</title>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
@@ -312,6 +314,50 @@
                 justify-content: flex-start;
             }
         }
+        
+        /* Estilos personalizados para SweetAlert2 */
+        .swal2-popup {
+            border-radius: 15px;
+            border: 3px solid #F5B301;
+        }
+        
+        .swal2-title {
+            color: #1E5A8E;
+            font-size: 24px;
+        }
+        
+        .swal2-html-container {
+            color: #2C2C2C;
+        }
+        
+        .swal2-confirm {
+            background: linear-gradient(135deg, #F5B301 0%, #e5a001 100%) !important;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(245, 179, 1, 0.3);
+        }
+        
+        .swal2-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 179, 1, 0.4);
+        }
+        
+        .swal2-cancel {
+            background: #6B6B6B !important;
+            border-radius: 8px;
+            padding: 12px 30px;
+        }
+        
+        .swal2-icon.swal2-success {
+            border-color: #27ae60;
+            color: #27ae60;
+        }
+        
+        .swal2-icon.swal2-error {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
     </style>
 </head>
 <body>
@@ -486,8 +532,14 @@
             if (itemsList.children.length > 1) {
                 button.parentElement.remove();
                 calcularTotales();
+                validarFormulario();
             } else {
-                alert('Debe haber al menos un item en la factura');
+                Swal.fire({
+                    icon: 'warning',
+                    title: '⚠️ Atención',
+                    text: 'Debe haber al menos un item en la factura',
+                    confirmButtonText: 'Entendido'
+                });
             }
         }
         
@@ -595,9 +647,18 @@
                 const formData = new FormData(this);
                 const btnGenerar = document.getElementById('btnGenerar');
                 
-                // Deshabilitar botón y mostrar loading
+                // Deshabilitar botón
                 btnGenerar.disabled = true;
-                btnGenerar.innerHTML = '⏳ Generando y enviando...';
+                
+                // Mostrar loading con SweetAlert2
+                Swal.fire({
+                    title: 'Generando Factura',
+                    html: '<p>Por favor espera mientras procesamos tu factura...</p><p style="color: #1E5A8E; margin-top: 15px;">☀️ ANCLAJE SOLAR ENERGY</p>',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
                 
                 fetch('/generar', {
                     method: 'POST',
@@ -606,19 +667,45 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('✅ ' + data.message + '\n\nLa factura se ha enviado al correo electrónico del cliente.');
-                        // Opcional: limpiar formulario o redirigir
-                        // window.location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Éxito!',
+                            html: `
+                                <p style="font-size: 18px; margin: 15px 0;">
+                                    <strong>Factura ${data.factura_no}</strong> generada correctamente
+                                </p>
+                                <p style="color: #6B6B6B; margin: 10px 0;">
+                                    📧 La factura se ha enviado al correo electrónico del cliente
+                                </p>
+                                <p style="color: #1E5A8E; margin-top: 15px; font-size: 14px;">
+                                    ☀️ ANCLAJE SOLAR ENERGY
+                                </p>
+                            `,
+                            confirmButtonText: 'Generar otra factura'
+                        }).then(() => {
+                            // Opcional: limpiar formulario
+                            // window.location.reload();
+                        });
                     } else {
-                        alert('❌ Error: ' + (data.error || 'No se pudo generar la factura'));
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.error || 'No se pudo generar la factura',
+                            confirmButtonText: 'Intentar nuevamente'
+                        });
                     }
                 })
                 .catch(error => {
-                    alert('❌ Error al generar la factura: ' + error.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de Conexión',
+                        text: 'No se pudo conectar con el servidor: ' + error.message,
+                        confirmButtonText: 'Reintentar'
+                    });
                 })
                 .finally(() => {
+                    // Restaurar botón
                     btnGenerar.disabled = false;
-                    btnGenerar.innerHTML = '🚀 Generar Factura';
                     validarFormulario();
                 });
             }
